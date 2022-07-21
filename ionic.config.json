@@ -1,0 +1,7 @@
+{
+  "name": "fahrradverleih-ionic",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}
