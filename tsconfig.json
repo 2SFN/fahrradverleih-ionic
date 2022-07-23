@@ -25,7 +25,9 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    /* Experimentelle flags (für tsyringe/injection) */
+    "experimentalDecorators": true
   },
   "include": [
     "src/**/*.ts",
