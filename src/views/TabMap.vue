@@ -11,19 +11,18 @@
           <ion-title size="large">Stationen Suchen</ion-title>
         </ion-toolbar>
       </ion-header>
-    
-      <ExploreContainer name="Tab 1 page" />
+      <MapContainer />
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue';
-import ExploreContainer from '@/components/ExploreContainer.vue';
+import {defineComponent} from 'vue';
+import {IonContent, IonHeader, IonPage, IonTitle, IonToolbar} from '@ionic/vue';
+import MapContainer from "@/components/MapContainer.vue";
 
 export default  defineComponent({
   name: 'StationsMap',
-  components: { ExploreContainer, IonHeader, IonToolbar, IonTitle, IonContent, IonPage }
+  components: {MapContainer, IonHeader, IonToolbar, IonTitle, IonContent, IonPage }
 });
 </script>

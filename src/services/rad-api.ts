@@ -1,6 +1,6 @@
 import axios, {AxiosInstance} from "axios";
 import Prefs from "@/util/prefs";
-import {container} from "tsyringe";
+import {container, singleton} from "tsyringe";
 
 /**
  * Basisklasse für API-Aufrufe an das Fahrradverleih-Backend.
@@ -9,6 +9,7 @@ import {container} from "tsyringe";
  *
  * @see Prefs.KEY_TOKEN
  */
+@singleton()
 export default class RadApi {
     private static readonly BASE_URL = "http://localhost:3000/api";
 
@@ -23,8 +24,10 @@ export default class RadApi {
         this.init();
     }
 
-    private async init() {
-        this.axios.defaults.headers.common["Token"] = await this.prefs.get(Prefs.KEY_TOKEN, "");
+    public async init() {
+        const t = await this.prefs.get(Prefs.KEY_TOKEN, "");
+        if (t.length > 1)
+            this.axios.defaults.headers.common["Token"] = t;
     }
 
     protected async get<T>(url: string, params?: any): Promise<T> {
