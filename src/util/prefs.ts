@@ -14,19 +14,15 @@ export default class Prefs {
 
     private storage: Storage | null = null;
 
-    constructor() {
-        this.init();
-    }
-
-    private async init() {
+    public async init() {
         this.storage = await new Storage().create();
     }
 
-    public async get(key: string, fallback: any): Promise<any> {
+    public async get<T>(key: string, fallback: T): Promise<T> {
         return (await this.storage?.get(key)) || fallback;
     }
 
-    public async set(key: string, value: any) {
+    public async set<T>(key: string, value: T) {
         await this.storage?.set(key, value);
     }
 }

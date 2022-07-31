@@ -25,10 +25,19 @@ import '@ionic/vue/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
+// Preferences
+import Prefs from "@/util/prefs";
+import {container} from "tsyringe";
+
 const app = createApp(App)
   .use(IonicVue)
   .use(router);
   
-router.isReady().then(() => {
+router.isReady().then(async () => {
+  // Sicherstellen, dass die Prefs-Klasse bereit ist
+  const prefs: Prefs = container.resolve(Prefs);
+  await prefs.init();
+
+  // Anwendung an container binden
   app.mount('#app');
 });
