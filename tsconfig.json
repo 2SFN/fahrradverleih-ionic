@@ -27,7 +27,9 @@
       "scripthost"
     ],
     /* Experimentelle flags (für tsyringe/injection) */
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    /* Für Property-Definitionen mit vue-class-component */
+    "useDefineForClassFields": true
   },
   "include": [
     "src/**/*.ts",
