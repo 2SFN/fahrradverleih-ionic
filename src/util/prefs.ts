@@ -25,4 +25,8 @@ export default class Prefs {
     public async set<T>(key: string, value: T) {
         await this.storage?.set(key, value);
     }
+
+    public async remove(key: string) {
+        await this.storage?.remove(key);
+    }
 }

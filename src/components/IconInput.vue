@@ -38,9 +38,7 @@ class IconInputProps {
 })
 export default class IconInput extends Vue.with(IconInputProps) {
 
-  public async mounted(): Promise<void> {
-    console.log(`IconInput(label=${this.label};editable=${this.editable})`)
-  }
+  // public async mounted(): Promise<void> {}
 
   private handleInput(value: string) {
     this.$emit("update:value", value);

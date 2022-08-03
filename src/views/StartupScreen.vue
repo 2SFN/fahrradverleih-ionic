@@ -137,12 +137,12 @@ export default class StartupScreen extends Vue {
       return;
     }
 
-    // Versuche Authentifizierung am Backend/Service
-    this.benutzerService.auth('', '')
+    // Versuche Authentifizierung am Backend/Service mit gespeichertem Token
+    this.benutzerService.auth()
         .then(() => this.$router.push("/tabs"))
         .catch(e => {
           // Lösche ungültiges Token
-          this.prefs.set(Prefs.KEY_TOKEN, "");
+          this.prefs.remove(Prefs.KEY_TOKEN);
 
           toastController.create({
             header: "Authentifizierung fehlgeschlagen",
@@ -159,7 +159,7 @@ export default class StartupScreen extends Vue {
     if (this.busy) return;
     this.busy = true;
 
-    this.benutzerService.auth(this.loginMail, this.loginPass)
+    this.benutzerService.login(this.loginMail, this.loginPass)
         .then(async r => {
           if (r.ok && r.token) {
             // Token speichern

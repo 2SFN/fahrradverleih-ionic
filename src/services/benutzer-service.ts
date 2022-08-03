@@ -7,35 +7,27 @@ import Ausleihe from "@/model/ausleihe";
 @singleton()
 export default class BenutzerService extends RadApi {
 
-    public async auth(email: string, password: string): Promise<LoginResult> {
-        const response = this.post<LoginResult>("/benutzer/auth", {
+    public async login(email: string, password: string): Promise<LoginResult> {
+        return this.post<LoginResult>("/benutzer/login", {
             email: email,
             secret: password
         });
+    }
 
-        if (response === undefined) {
-            throw new Error("Authentifizierung: API-Fehler.");
-        } else {
-            return response;
-        }
+    public async auth(): Promise<LoginResult> {
+        return this.get<LoginResult>("/benutzer/auth", {});
     }
 
     public async getBenutzer(): Promise<Benutzer> {
-        const res = this.get<Benutzer>("/benutzer/details");
-        if (res === undefined) {
-            throw new Error("Benutzer: API-Fehler.");
-        } else {
-            return res;
-        }
+        return this.get<Benutzer>("/benutzer/details");
+    }
+
+    public async setBenutzer(benutzer: Benutzer): Promise<void> {
+        return this.post("/benutzer/details", benutzer);
     }
 
     public async getAusleihen(): Promise<Ausleihe[]> {
-        const res = this.get<Ausleihe[]>("/benutzer/ausleihen");
-        if (res === undefined) {
-            throw new Error("Benutzer: API-Fehler.");
-        } else {
-            return res;
-        }
+        return this.get<Ausleihe[]>("/benutzer/ausleihen");
     }
 
 }

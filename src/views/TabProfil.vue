@@ -31,17 +31,31 @@
     </ion-content>
 
     <ion-footer>
-      <ion-button color="primary" expand="block" fill="outline">Änderungen übernehmen</ion-button>
+      <ion-button color="primary" expand="block" @click="apply()"
+                  fill="outline" >Änderungen übernehmen</ion-button>
     </ion-footer>
 
   </ion-page>
 </template>
 
 <script lang="ts">
-import {IonButton, IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonPage, IonTitle, IonToolbar} from '@ionic/vue';
+import {
+  IonButton,
+  IonContent,
+  IonFooter,
+  IonHeader,
+  IonIcon,
+  IonItem,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  toastController
+} from '@ionic/vue';
 import IconInput from "@/components/IconInput.vue";
 import {Options, Vue} from "vue-class-component";
 import Benutzer from "@/model/benutzer";
+import {container} from "tsyringe";
+import BenutzerService from "@/services/benutzer-service";
 
 @Options({
   name: 'TabProfil',
@@ -49,8 +63,32 @@ import Benutzer from "@/model/benutzer";
     IonIcon, IonButton, IonFooter}
 })
 export default class TabProfil extends Vue {
+  private benutzerService = container.resolve(BenutzerService);
+
   private benutzer = new Benutzer();
 
+  public async mounted(): Promise<void> {
+    // Profilinformationen abrufen
+    this.benutzerService.getBenutzer()
+    .then(b => this.benutzer = b)
+    .catch(e => {
+      toastController.create({
+        header: "Abrufen der Profildaten fehlgeschlagen",
+        message: `Fehler: ${e.message}`,
+        color: "warning",
+        duration: 3000
+      }).then(t => t.present());
+    });
+  }
+
+  public async apply(): Promise<void> {
+    await this.benutzerService.setBenutzer(this.benutzer);
+    toastController.create({
+      header: "Daten gespeichert!",
+      color: "success",
+      duration: 3000
+    }).then(t => t.present());
+  }
 
 }
 </script>
