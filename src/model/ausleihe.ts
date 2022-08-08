@@ -1,14 +1,12 @@
-import GeopositionT from "@/model/geoposition";
-import FahrradTyp from "@/model/fahrradtyp";
 import TarifT from "@/model/tarif";
+import Fahrrad from "@/model/fahrrad";
 
 /**
  * Repräsentiert /benutzer/ausliehen
  */
 export default class Ausleihe {
     constructor(public id: string,
-                public position: GeopositionT,
-                public typ: FahrradTyp,
+                public fahrrad: Fahrrad,
                 public tarif: TarifT,
                 public von: Date,
                 public bis: Date) {}
@@ -18,6 +16,6 @@ export default class Ausleihe {
      * kann/muss, oder nicht.
      */
     public get aktiv(): boolean {
-        return new Date() < this.bis;
+        return new Date().getTime() < this.bis.getTime();
     }
 }
