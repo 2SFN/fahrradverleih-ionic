@@ -104,6 +104,7 @@ export default class StartupScreen extends Vue {
   public loginPass = '';
 
   public async mounted(): Promise<void> {
+    await this.prefs.init();
     this.navigate();
   }
 
@@ -114,9 +115,7 @@ export default class StartupScreen extends Vue {
       case '/':
       case '/auth':
         this.state = StartupScreen.STATE_AUTH;
-        // TODO: Debug statement
-        // await this.auth();
-        setTimeout(() => this.auth(), 3333);
+        this.auth();
         break;
       case '/login':
         this.state = StartupScreen.STATE_LOGIN;
