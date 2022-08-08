@@ -1,6 +1,7 @@
 import axios, {AxiosInstance} from "axios";
 import Prefs from "@/util/prefs";
 import {container, singleton} from "tsyringe";
+import dateResponseInterceptor from "@/util/date-response-interceptor";
 
 /**
  * Basisklasse für API-Aufrufe an das Fahrradverleih-Backend.
@@ -21,6 +22,9 @@ export default class RadApi {
             baseURL: RadApi.BASE_URL
         });
 
+        // Response-Interceptor, um Date-Strings zu Date-Objekten umzuwandeln
+        this.axios.interceptors.response.use(dateResponseInterceptor);
+
         this.init();
     }
 
@@ -28,6 +32,7 @@ export default class RadApi {
         const t = await this.prefs.get(Prefs.KEY_TOKEN, "");
         if (t.length > 1)
             this.axios.defaults.headers.common["Token"] = t;
+        return this;
     }
 
     protected async get<T>(url: string, params?: any): Promise<T> {
