@@ -30,4 +30,19 @@ export default class BenutzerService extends RadApi {
         return this.get<Ausleihe[]>("/benutzer/ausleihen");
     }
 
+    public async neueAusleihe(rad_id: string, von: Date, bis: Date): Promise<Ausleihe> {
+        return this.post("/benutzer/ausleihen/neu", {
+            fahrrad: {id: rad_id},
+            von: von,
+            bis: bis
+        });
+    }
+
+    public endeAusleihe(ausleihe_id: string, station_id: string): Promise<Ausleihe> {
+        return this.post("/benutzer/ausleihen/ende", {
+            ausleihe: { id: ausleihe_id },
+            station: { id: station_id }
+        });
+    }
+
 }

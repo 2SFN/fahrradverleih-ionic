@@ -1,8 +1,8 @@
 <template>
   <ion-page>
     <ion-header>
-      <ion-toolbar>
-        <ion-title>Ausleihen</ion-title>
+      <ion-toolbar color="primary">
+        <ion-title>Meine Ausleihen</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -20,44 +20,71 @@
             <p>Tarif: {{ transformTarif(item) }}</p>
             <p>ID: {{ item.id }}</p>
             <p>{{ transformZeitEnde(item) }}</p>
-            <ion-button fill="outline">Zurückgeben</ion-button>
+            <ion-button fill="outline" v-if="item.bis.getTime() > new Date().getTime()"
+                        @click="setModalStationOpen(true, item)">Zurückgeben
+            </ion-button>
           </div>
         </ion-item>
 
         <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
       </ion-list>
     </ion-content>
+
+    <!-- Modal: Stations-Auswahl (bei Rückgabe) -->
+    <ion-modal id="select-station" animated="true" :is-open="modalStationOpen">
+      <ion-content>
+        <ion-toolbar>
+          <ion-title>Rückgabe-Station auswählen</ion-title>
+          <ion-label v-if="auswahlAusleihe !== null">Rad-ID: {{ auswahlAusleihe.fahrrad.id }}</ion-label>
+        </ion-toolbar>
+
+        <ion-list>
+          <ion-radio-group>
+            <ion-item v-for="station in stationen" :key="station" @click="auswahlStation = station">
+              <ion-radio :value="station.id"></ion-radio>
+              <ion-label>{{ station.bezeichnung }}</ion-label>
+            </ion-item>
+          </ion-radio-group>
+        </ion-list>
+
+        <ion-button color="medium" @click="setModalStationOpen(false)">Abbrechen</ion-button>
+        <ion-button color="primary" @click="beendeAusleihe()">Rückgabe bestätigen</ion-button>
+      </ion-content>
+    </ion-modal>
+
   </ion-page>
 </template>
 
 <script lang="ts">
 import {Options, Vue} from "vue-class-component";
 import {
-  IonButton,
-  IonContent,
-  IonHeader,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  toastController
+  IonButton, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonModal, IonPage,
+  IonRadio, IonRadioGroup, IonTitle, IonToolbar, loadingController, toastController
 } from '@ionic/vue';
 import RadIcon from "@/components/RadIcon.vue";
 import Ausleihe from "@/model/ausleihe";
 import BenutzerService from "@/services/benutzer-service";
 import {container} from "tsyringe";
+import Station from "@/model/station";
+import StationenService from "@/services/stationen-service";
 
+// noinspection JSMethodCanBeStatic
 @Options({
   name: 'TabAusleihen',
-  components: {RadIcon, IonList, IonItem, IonHeader, IonToolbar, IonTitle, IonContent, IonPage,
-    IonLabel, IonButton},
+  components: {
+    RadIcon, IonList, IonItem, IonHeader, IonToolbar, IonTitle, IonContent, IonPage,
+    IonLabel, IonButton, IonModal, IonRadioGroup, IonRadio, IonListHeader
+  },
 })
 export default class TabAusleihen extends Vue {
   private benutzerService: BenutzerService = container.resolve(BenutzerService);
+  private stationenService: StationenService = container.resolve(StationenService);
 
   private ausleihen: Ausleihe[] = []
+  private stationen: Station[] = []
+  private auswahlAusleihe: Ausleihe | null = null;
+  private auswahlStation: Station | null = null;
+  private modalStationOpen = false;
 
   public async mounted(): Promise<void> {
     await this.benutzerService.init();
@@ -73,12 +100,62 @@ export default class TabAusleihen extends Vue {
         });
   }
 
+  private async beendeAusleihe() {
+    if(this.auswahlStation === null || this.auswahlAusleihe === null) return;
+
+    const loading = await loadingController.create({
+      message: "Rad zurückgeben..."
+    });
+    await loading.present();
+    try {
+      const res = await this.benutzerService.endeAusleihe(this.auswahlAusleihe.id, this.auswahlStation.id);
+      this.ausleihen.forEach((a, i) => {
+        if (a.id === res.id) this.ausleihen[i] = res;
+      });
+    }catch (e: any) {
+      await (await toastController.create({
+        header: "Abrufen der Stationen fehlgeschlagen",
+        message: `Fehlerbeschreibung: ${e.message}`,
+        duration: 3000,
+        color: "warning"
+      })).present();
+    } finally {
+      await loading.dismiss();
+      await this.setModalStationOpen(false);
+    }
+  }
+
+  private async setModalStationOpen(open: boolean, auswahl: Ausleihe | null = null) {
+    this.modalStationOpen = open;
+    this.auswahlAusleihe = open ? auswahl : null;
+    this.auswahlStation = null;
+
+    // Lade Liste von Station zum Auswählen, falls noch nicht geschehen
+    if (this.stationen.length === 0 && open) {
+      const loading = await loadingController.create({
+        message: "Liste von Stationen abrufen...",
+      });
+      await loading.present();
+
+      this.stationenService.getStationen()
+      .then(s => this.stationen = s)
+      .catch(async e => {
+        await (await toastController.create({
+          header: "Abrufen der Stationen fehlgeschlagen",
+          message: `Fehlerbeschreibung: ${e.message}`,
+          duration: 3000,
+          color: "warning"
+        })).present();
+      })
+      .finally(() => loading.dismiss());
+    }
+  }
+
   private transformTarif(a: Ausleihe) {
     return `${a.tarif.preis.betrag} ${a.tarif.preis.iso4217} für ${a.tarif.taktung} Stunden`;
   }
 
   private transformZeitEnde(a: Ausleihe) {
-    console.log(a);
     if (a.bis.getTime() < new Date().getTime())
       return `Zurückgegeben am ${a.bis.toLocaleDateString()}`;
     else

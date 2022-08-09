@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'fahrradverleih-ionic',
+  appId: 'de.fhswf.fahrradverleih.ionic',
+  appName: 'Fahrradverleih (Ionic)',
   webDir: 'dist',
   bundledWebRuntime: false
 };
