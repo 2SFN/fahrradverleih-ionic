@@ -58,8 +58,20 @@
 <script lang="ts">
 import {Options, Vue} from "vue-class-component";
 import {
-  IonButton, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonModal, IonPage,
-  IonRadio, IonRadioGroup, IonTitle, IonToolbar, loadingController, toastController
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonModal,
+  IonPage,
+  IonRadio,
+  IonRadioGroup,
+  IonTitle,
+  IonToolbar,
+  loadingController
 } from '@ionic/vue';
 import RadIcon from "@/components/RadIcon.vue";
 import Ausleihe from "@/model/ausleihe";
@@ -67,6 +79,7 @@ import BenutzerService from "@/services/benutzer-service";
 import {container} from "tsyringe";
 import Station from "@/model/station";
 import StationenService from "@/services/stationen-service";
+import {infoToast, retryToast} from "@/util/toasts";
 
 // noinspection JSMethodCanBeStatic
 @Options({
@@ -88,66 +101,70 @@ export default class TabAusleihen extends Vue {
 
   public async mounted(): Promise<void> {
     await this.benutzerService.init();
+    this.ladeAusleihen();
+  }
+
+  private ladeAusleihen() {
     this.benutzerService.getAusleihen()
         .then(a => this.ausleihen = a)
         .catch(e => {
-          toastController.create({
-            header: "Abrufen der Ausleihen fehlgeschlagen",
-            message: `Fehler: ${e.message}`,
-            color: "warning",
-            duration: 3000
-          }).then(t => t.present());
+          retryToast(
+              () => this.ladeAusleihen(),
+              `Fehler: ${e.message}`,
+              "Abrufen der Ausleihen fehlgeschlagen"
+          );
         });
   }
 
-  private async beendeAusleihe() {
-    if(this.auswahlStation === null || this.auswahlAusleihe === null) return;
-
-    const loading = await loadingController.create({
-      message: "Rad zurückgeben..."
-    });
-    await loading.present();
-    try {
-      const res = await this.benutzerService.endeAusleihe(this.auswahlAusleihe.id, this.auswahlStation.id);
-      this.ausleihen.forEach((a, i) => {
-        if (a.id === res.id) this.ausleihen[i] = res;
-      });
-    }catch (e: any) {
-      await (await toastController.create({
-        header: "Abrufen der Stationen fehlgeschlagen",
-        message: `Fehlerbeschreibung: ${e.message}`,
-        duration: 3000,
-        color: "warning"
-      })).present();
-    } finally {
-      await loading.dismiss();
-      await this.setModalStationOpen(false);
-    }
-  }
-
+  /**
+   * Steuert das Modal zum Abgabe-Station auswählen und wird aufgerufen, sobald der Anwender eine aktive
+   * Ausleihe zurückgeben möchte. Falls noch nicht geschehen, ruft diese Funktion auch eine Liste von
+   * Stationen vom Backend ab.
+   *
+   * @param open Neuer Zustand des Modals.
+   * @param auswahl Ausgewählte {@link Ausleihe}-Instanz, optional.
+   */
   private async setModalStationOpen(open: boolean, auswahl: Ausleihe | null = null) {
     this.modalStationOpen = open;
     this.auswahlAusleihe = open ? auswahl : null;
     this.auswahlStation = null;
 
     // Lade Liste von Station zum Auswählen, falls noch nicht geschehen
-    if (this.stationen.length === 0 && open) {
-      const loading = await loadingController.create({
-        message: "Liste von Stationen abrufen...",
-      });
-      await loading.present();
+    if (this.stationen.length > 0 || !open) return;
+    const loading = await loadingController.create({
+      message: "Liste von Stationen abrufen...",
+    });
+    await loading.present();
 
-      this.stationenService.getStationen()
-      .then(s => this.stationen = s)
-      .catch(async e => {
-        await (await toastController.create({
-          header: "Abrufen der Stationen fehlgeschlagen",
-          message: `Fehlerbeschreibung: ${e.message}`,
-          duration: 3000,
-          color: "warning"
-        })).present();
-      })
-      .finally(() => loading.dismiss());
+    this.stationenService.getStationen()
+        .then(s => this.stationen = s)
+        .catch(async e => {
+          await this.setModalStationOpen(false);
+          await infoToast("Abrufen der Stationen fehlgeschlagen",
+              `Fehler: ${e.message}`);
+        })
+        .finally(() => loading.dismiss());
+  }
+
+  /**
+   * Wird aufgerufen, sobald der Anwender im "Zurückgeben"-Dialog eine Abgabe-Station ausgewählt
+   * und bestätigt hat.
+   */
+  private async beendeAusleihe() {
+    if (this.auswahlStation === null || this.auswahlAusleihe === null) return;
+
+    const loading = await loadingController.create({message: "Rad zurückgeben..."});
+    await loading.present();
+    try {
+      const res = await this.benutzerService.endeAusleihe(this.auswahlAusleihe.id, this.auswahlStation.id);
+      this.ausleihen.forEach((a, i) => {
+        if (a.id === res.id) this.ausleihen[i] = res;
+      });
+    } catch (e: any) {
+      await infoToast("Rückgabe fehlgeschlagen", `Fehler: ${e.message}`);
+    } finally {
+      await loading.dismiss();
+      await this.setModalStationOpen(false);
     }
   }
 
