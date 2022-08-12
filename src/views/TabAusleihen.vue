@@ -12,11 +12,16 @@
         </ion-toolbar>
       </ion-header>
 
+      <ion-refresher slot="fixed" @ionRefresh="ladeAusleihen($event)" id="refresher">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
+
       <ion-list>
         <rad-item v-for="item in ausleihen" :key="item" :rad="item.fahrrad">
           <p>{{ transformZeitEnde(item) }}</p>
           <ion-button fill="outline" v-if="item.bis.getTime() > new Date().getTime()"
-                      @click="setModalStationOpen(true, item)">Zurückgeben</ion-button>
+                      @click="setModalStationOpen(true, item)">Zurückgeben
+          </ion-button>
         </rad-item>
 
         <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
@@ -61,10 +66,10 @@ import {
   IonModal,
   IonPage,
   IonRadio,
-  IonRadioGroup,
+  IonRadioGroup, IonRefresher, IonRefresherContent,
   IonTitle,
   IonToolbar,
-  loadingController
+  loadingController, RefresherCustomEvent
 } from '@ionic/vue';
 import RadIcon from "@/components/RadIcon.vue";
 import Ausleihe from "@/model/ausleihe";
@@ -81,7 +86,8 @@ import RadItem from "@/components/RadItem.vue";
   components: {
     RadItem,
     RadIcon, IonList, IonItem, IonHeader, IonToolbar, IonTitle, IonContent, IonPage,
-    IonLabel, IonButton, IonModal, IonRadioGroup, IonRadio, IonListHeader
+    IonLabel, IonButton, IonModal, IonRadioGroup, IonRadio, IonListHeader, IonRefresher,
+    IonRefresherContent
   },
 })
 export default class TabAusleihen extends Vue {
@@ -99,15 +105,17 @@ export default class TabAusleihen extends Vue {
     this.ladeAusleihen();
   }
 
-  private ladeAusleihen() {
+  private ladeAusleihen(event: RefresherCustomEvent | null = null) {
     this.benutzerService.getAusleihen()
-        .then(a => this.ausleihen = a)
-        .catch(e => {
-          retryToast(
-              () => this.ladeAusleihen(),
-              `Fehler: ${e.message}`,
-              "Abrufen der Ausleihen fehlgeschlagen"
-          );
+        .then(a => {
+          this.ausleihen = a;
+        })
+        .catch(e => retryToast(
+            () => this.ladeAusleihen(),
+            `Fehler: ${e.message}`,
+            "Abrufen der Ausleihen fehlgeschlagen"))
+        .finally(() => {
+          if (event !== null) event.target.complete();
         });
   }
 
@@ -155,6 +163,9 @@ export default class TabAusleihen extends Vue {
       this.ausleihen.forEach((a, i) => {
         if (a.id === res.id) this.ausleihen[i] = res;
       });
+
+      await infoToast("Ausleihe beendet",
+          `Fahrrad ${res.fahrrad.id} zurückgegeben.`, "success");
     } catch (e: any) {
       await infoToast("Rückgabe fehlgeschlagen", `Fehler: ${e.message}`);
     } finally {

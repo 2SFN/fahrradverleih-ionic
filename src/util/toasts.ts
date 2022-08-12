@@ -5,24 +5,24 @@ import {toastController} from "@ionic/vue";
     Ermöglicht dadurch schlankere Aufrufe und einheitliche Standardwerte.
  */
 
-export const retryToast = async (onRetry: () => void, message: string, header = "Fehler",
-                                 actionLabel = "Erneut versuchen") => {
+export const actionToast = async (onAction: () => void, actionLabel: string, header: string,
+                                  message: string, color = "primary") => {
     const toast = await toastController.create({
-        header: header,
-        message: message,
-        color: "warning",
-        buttons: [
-            {
-                side: "end",
-                text: actionLabel,
-                handler: async () => {
-                    await toast.dismiss();
-                    onRetry();
-                }
+        header: header, message: message, color: color,
+        buttons: [{
+            side: "end", text: actionLabel,
+            handler: async () => {
+                await toast.dismiss();
+                onAction();
             }
-        ]
+        }]
     });
     await toast.present();
+}
+
+export const retryToast = async (onRetry: () => void, message: string, header = "Fehler",
+                                 actionLabel = "Erneut versuchen") => {
+    await actionToast(onRetry, actionLabel, header, message);
 }
 
 export const infoToast = async (header: string, message: string, color = "warning",
