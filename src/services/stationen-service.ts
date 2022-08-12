@@ -15,7 +15,7 @@ export default class StationenService extends RadApi {
         }
     }
 
-    public async getFahrrad(stationId: string): Promise<Fahrrad[]> {
+    public async getRaeder(stationId: string): Promise<Fahrrad[]> {
         const res = this.get<Fahrrad[]>(`/stationen/${stationId}/raeder`);
         if (res === undefined) {
             throw new Error("Fahrräder: API-Fehler.");

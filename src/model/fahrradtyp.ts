@@ -5,11 +5,11 @@ export default class FahrradTyp {
         public bezeichnung: string = "",
         public tarif: TarifT) {}
 
-    toString() {
+    public toString() {
         return `${this.bezeichnung} (${this.tarif.toString()})`;
     }
 
-    asObject() {
+    public asObject() {
         return {
             bezeichnung: this.bezeichnung,
             tarif: this.tarif
