@@ -15,7 +15,8 @@ export const actionToast = async (onAction: () => void, actionLabel: string, hea
                 await toast.dismiss();
                 onAction();
             }
-        }]
+        }],
+        cssClass: 'toast-elevated'
     });
     await toast.present();
 }
@@ -31,6 +32,7 @@ export const infoToast = async (header: string, message: string, color = "warnin
         header: header,
         message: message,
         duration: duration,
-        color: color
+        color: color,
+        cssClass: 'toast-elevated'
     })).present();
 }

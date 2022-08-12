@@ -31,6 +31,8 @@
     </ion-content>
 
     <ion-footer>
+      <ion-button color="danger" expand="block" fill="outline"
+                  @click="logoutDialog()">Abmelden</ion-button>
       <ion-button color="primary" expand="block" @click="apply()"
                   fill="outline" >Änderungen übernehmen</ion-button>
     </ion-footer>
@@ -40,6 +42,7 @@
 
 <script lang="ts">
 import {
+  alertController,
   IonButton,
   IonContent,
   IonFooter,
@@ -56,6 +59,7 @@ import {Options, Vue} from "vue-class-component";
 import Benutzer from "@/model/benutzer";
 import {container} from "tsyringe";
 import BenutzerService from "@/services/benutzer-service";
+import Prefs from "@/util/prefs";
 
 @Options({
   name: 'TabProfil',
@@ -88,6 +92,28 @@ export default class TabProfil extends Vue {
       color: "success",
       duration: 3000
     }).then(t => t.present());
+  }
+
+  private async logoutDialog() {
+    await (await alertController.create({
+      header: "Abmelden bestätigen",
+      message: "Sie können sich später wieder mit Ihren Zugangsdaten anmelden.",
+      buttons: [
+        {
+          text: "Abbrechen",
+          role: "cancel"
+        },
+        {
+          text: "Abmelden",
+          role: "confirm",
+          handler: async () => {
+            // Token löschen und auf Startseite weiterleiten
+            await container.resolve(Prefs).remove(Prefs.KEY_TOKEN);
+            this.$router.push("/");
+          }
+        }
+      ]
+    })).present();
   }
 
 }
