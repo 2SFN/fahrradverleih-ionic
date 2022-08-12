@@ -8,7 +8,7 @@ import {IonIcon, IonImg} from "@ionic/vue";
 import FahrradTyp from "@/model/fahrradtyp";
 import TarifT from "@/model/tarif";
 
-class RadIconProps {
+export class RadIconProps {
   static readonly DEFAULT_RADTYP = new FahrradTyp("Unbekannt", new TarifT());
   radtyp = prop<FahrradTyp>({default: RadIconProps.DEFAULT_RADTYP});
 }

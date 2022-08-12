@@ -13,18 +13,11 @@
       </ion-header>
 
       <ion-list>
-        <ion-item v-for="item in ausleihen" :key="item" lines="full">
-          <RadIcon :radtyp="item.fahrrad.typ" slot="start" class="rad-icon"></RadIcon>
-          <div class="info-container">
-            <h2>{{ item.fahrrad.typ.bezeichnung }}</h2>
-            <p>Tarif: {{ transformTarif(item) }}</p>
-            <p>ID: {{ item.id }}</p>
-            <p>{{ transformZeitEnde(item) }}</p>
-            <ion-button fill="outline" v-if="item.bis.getTime() > new Date().getTime()"
-                        @click="setModalStationOpen(true, item)">Zurückgeben
-            </ion-button>
-          </div>
-        </ion-item>
+        <rad-item v-for="item in ausleihen" :key="item" :rad="item.fahrrad">
+          <p>{{ transformZeitEnde(item) }}</p>
+          <ion-button fill="outline" v-if="item.bis.getTime() > new Date().getTime()"
+                      @click="setModalStationOpen(true, item)">Zurückgeben</ion-button>
+        </rad-item>
 
         <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
       </ion-list>
@@ -80,11 +73,13 @@ import {container} from "tsyringe";
 import Station from "@/model/station";
 import StationenService from "@/services/stationen-service";
 import {infoToast, retryToast} from "@/util/toasts";
+import RadItem from "@/components/RadItem.vue";
 
 // noinspection JSMethodCanBeStatic
 @Options({
   name: 'TabAusleihen',
   components: {
+    RadItem,
     RadIcon, IonList, IonItem, IonHeader, IonToolbar, IonTitle, IonContent, IonPage,
     IonLabel, IonButton, IonModal, IonRadioGroup, IonRadio, IonListHeader
   },
@@ -168,10 +163,6 @@ export default class TabAusleihen extends Vue {
     }
   }
 
-  private transformTarif(a: Ausleihe) {
-    return `${a.tarif.preis.betrag} ${a.tarif.preis.iso4217} für ${a.tarif.taktung} Stunden`;
-  }
-
   private transformZeitEnde(a: Ausleihe) {
     if (a.bis.getTime() < new Date().getTime())
       return `Zurückgegeben am ${a.bis.toLocaleDateString()}`;
@@ -183,15 +174,6 @@ export default class TabAusleihen extends Vue {
 </script>
 
 <style scoped>
-.rad-icon {
-  max-width: 7em;
-  /* TODO: Restliches Styling */
-}
-
-.info-container {
-  /* TODO */
-}
-
 .list-hint {
   /* TODO */
 }
