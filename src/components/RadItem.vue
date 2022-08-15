@@ -55,6 +55,23 @@ export default class RadItem extends Vue.with(RadItemProps) {
 }
 
 .info-container {
-  /* TODO: Styling */
+  padding-top: .5em;
+  padding-bottom: .5em;
 }
+
+.info-container > h2 {
+  font-size: medium;
+  font-weight: bold;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+/* v-deep: Style auch auf untergeordnete nodes außerhalb des scopes anwenden, i.e. slots */
+.info-container::v-deep(p) {
+  font-size: medium;
+  font-weight: lighter;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
 </style>
