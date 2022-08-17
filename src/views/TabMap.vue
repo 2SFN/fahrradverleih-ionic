@@ -9,13 +9,48 @@
       <div id="gmap" slot="fixed"></div>
     </ion-content>
 
-    <!-- Modal: Fahrrad-Auswahl (nach Auswahl einer Station) -->
+    <!-- Modal: Kategorie-Auswahl (nach Auswahl einer Station) -->
+    <ion-modal id="modal-kategorie" animated="true" :is-open="modalKategorieOpen">
+      <ion-content>
+        <ion-toolbar color="primary">
+          <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
+          <div v-if="auswahlStation !== null" class="title-container">
+            <h2>{{ auswahlStation.bezeichnung }}</h2>
+            <p>Radtyp auswählen</p>
+          </div>
+        </ion-toolbar>
+
+        <ion-list>
+          <ion-item v-for="typ in anzahlProTyp.keys()" :key="typ" lines="full">
+            <rad-icon :radtyp="typ" class="rad-icon" slot="start"></rad-icon>
+            <div class="info-container">
+              <h2>{{typ}}</h2>
+              <p>Anzahl: {{anzahlProTyp.get(typ)}}</p>
+              <ion-button fill="outline" @click="setModalRadListeOpen(true, auswahlStation, typ)">
+                Auswählen
+              </ion-button>
+            </div>
+          </ion-item>
+
+          <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
+        </ion-list>
+
+        <div class="bottom-buttons-container" slot="fixed">
+          <ion-button color="medium" fill="outline" @click="setModalKategorieOpen(false)"
+                      expand="block">Zurück</ion-button>
+        </div>
+      </ion-content>
+    </ion-modal>
+
+    <!-- Modal: Fahrrad-Auswahl (nach Auswahl eines Rad-Typs) -->
     <ion-modal id="modal-rad" animated="true" :is-open="modalRadListeOpen">
       <ion-content>
         <ion-toolbar color="primary">
-          <!-- //TODO: Icon (s. Mockups) -->
-          <ion-title v-if="auswahlStation !== null">{{ auswahlStation.bezeichnung }}</ion-title>
-          <p>Fahrrad auswählen</p>
+          <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
+          <div v-if="auswahlStation !== null" class="title-container">
+            <h2>{{ auswahlStation.bezeichnung }}</h2>
+            <p>Fahrrad auswählen</p>
+          </div>
         </ion-toolbar>
 
         <ion-list>
@@ -25,9 +60,7 @@
         </ion-list>
 
         <div class="bottom-buttons-container" slot="fixed">
-          <ion-button color="medium" fill="outline"
-                      @click="setModalRadListeOpen(false)">Zurück
-          </ion-button>
+          <ion-button color="medium" fill="outline" @click="setModalRadListeOpen(false)">Zurück</ion-button>
         </div>
       </ion-content>
     </ion-modal>
@@ -36,9 +69,11 @@
     <ion-modal id="modal-ausleihe" animated="true" :is-open="modalAusleiheOpen">
       <ion-content>
         <ion-toolbar color="primary">
-          <!-- //TODO: Icon (s. Mockups) -->
-          <ion-title v-if="auswahlStation !== null">{{ auswahlStation.bezeichnung }}</ion-title>
-          <p>Fahrrad buchen</p>
+          <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
+          <div v-if="auswahlStation !== null" class="title-container">
+            <h2>{{ auswahlStation.bezeichnung }}</h2>
+            <p>Fahrrad buchen</p>
+          </div>
         </ion-toolbar>
 
         <rad-item v-if="auswahlRad !== null" :rad="auswahlRad"></rad-item>
@@ -70,7 +105,8 @@
 
         <div class="bottom-buttons-container" slot="fixed">
           <ion-button color="primary" fill="outline"
-                      @click="beginneAusleihe()">Buchung Bestätigen</ion-button>
+                      @click="beginneAusleihe()">Buchung Bestätigen
+          </ion-button>
           <ion-button color="medium" fill="outline"
                       @click="setModalAusleiheOpen(false)">Zurück
           </ion-button>
@@ -84,8 +120,17 @@
 <script lang="ts">
 import {Options, Vue} from "vue-class-component";
 import {
-  IonContent, IonHeader, IonModal, IonPage, IonTitle, IonToolbar, IonButton, IonList,
-  loadingController, IonItem, IonLabel
+  IonButton,
+  IonContent,
+  IonHeader, IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonModal,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  loadingController
 } from '@ionic/vue';
 import BenutzerService from "@/services/benutzer-service";
 import {container} from "tsyringe";
@@ -102,7 +147,7 @@ import RadItem from "@/components/RadItem.vue";
   components: {
     RadItem,
     RadIcon, IonHeader, IonToolbar, IonTitle, IonContent, IonPage, IonModal, IonButton,
-    IonList, IonItem, IonLabel
+    IonList, IonItem, IonLabel, IonIcon
   }
 })
 export default class TabMap extends Vue {
@@ -113,12 +158,15 @@ export default class TabMap extends Vue {
   private stationenService: StationenService = container.resolve(StationenService);
 
   private stationen: Station[] = []
-  private auswahlStation: Station | null = null;
   private raeder: Fahrrad[] = []
+  private anzahlProTyp = new Map<string, number>();
+  private auswahlStation: Station | null = null;
   private auswahlRad: Fahrrad | null = null;
+  private auswahlDauer = 0;
+
   private modalRadListeOpen = false;
   private modalAusleiheOpen = false;
-  private auswahlDauer = 0;
+  private modalKategorieOpen = false;
 
   private mapLoader = new Loader({
     apiKey: process.env.VUE_APP_MAPS_API_KEY,
@@ -171,25 +219,22 @@ export default class TabMap extends Vue {
           this.stationen.forEach(s => {
             const marker = new google.maps.Marker({
               map: map,
-              position: {
-                lat: s.position.breite,
-                lng: s.position.laenge
-              },
-              clickable: true,
-              draggable: false,
-              title: s.bezeichnung
+              position: {lat: s.position.breite, lng: s.position.laenge},
+              clickable: true, draggable: false,
+              title: s.bezeichnung,
+              label: {
+                text: String(s.verfuegbar),
+                fontWeight: "bold"
+              }
             });
-            marker.addListener("click", async () => {
-              // TODO: Modal mit Fahrrad-Kategorien, anstatt direkt Liste von Rädern?
-              await this.setModalRadListeOpen(true, s);
-            });
+            marker.addListener("click", () => this.setModalKategorieOpen(true, s));
           });
         });
   }
 
   /**
    * Steuert das Modal zur Fahrrad-Auswahl. Erfordert zum Öffnen die vorherige Auswahl einer
-   * bestimmten Station.
+   * bestimmten Station. Filtert die Liste nach einer bestimmten Typenbezeichnung (optional).
    *
    * @param open Neuer Zustand des Modals.
    * @param station Ausgewählte {@link Station} (wenn offen).
@@ -198,22 +243,10 @@ export default class TabMap extends Vue {
   private async setModalRadListeOpen(open: boolean, station: Station | null = null,
                                      filter: string | null = null) {
     this.modalRadListeOpen = open;
-    this.auswahlStation = open ? station : null;
-    if (!open) this.raeder = [];
+    this.auswahlStation = station;
 
-    // Lade liste von Rädern, falls noch nicht geschehen (und offen)
-    if (this.raeder.length > 0 || !open || station === null) return;
-    const loading = await loadingController.create({message: "Liste von Fahrrädern abrufen..."});
-    await loading.present();
-
-    this.stationenService.getRaeder(station.id)
-        .then(r => r.filter(f => f.typ.bezeichnung === filter || filter === null))
-        .then(r => this.raeder = r)
-        .catch(async e => {
-          await this.setModalRadListeOpen(false);
-          await infoToast("Abrufen der Fahrräder fehlgeschlagen", `Fehler: ${e.message}`);
-        })
-        .finally(() => loading.dismiss());
+    if (this.raeder.length > 0 && filter !== null)
+      this.raeder = this.raeder.filter(r => r.typ.bezeichnung === filter);
   }
 
   /**
@@ -230,6 +263,37 @@ export default class TabMap extends Vue {
   }
 
   /**
+   * Steuert das Modal zur Fahrradtypen-Auswahl. Ruft dazu die Liste von verfügbaren Rädern
+   * zu der zuvor ausgewählten Station ab.
+   *
+   * @param open Neuer Zustand des Modals.
+   * @param station Ausgewählte Station.
+   */
+  private async setModalKategorieOpen(open: boolean, station: Station | null = null) {
+    this.modalKategorieOpen = open;
+    this.auswahlStation = station;
+    if (!open) this.raeder = [];
+
+    // Lade Liste von Rädern
+    if (!open || station === null) return;
+    loadingController.create({message: "Liste von Fahrrädern abrufen..."})
+        .then(loading => loading.present())
+        .then(() => this.stationenService.getRaeder(station.id))
+        .then(r => this.raeder = r)
+        .then(r => {
+          // Zähle die Anzahl von Rädern pro Typenbezeichnung
+          this.anzahlProTyp.clear();
+          for(const c of r)
+            this.anzahlProTyp.set(c.typ.bezeichnung, (this.anzahlProTyp.get(c.typ.bezeichnung) || 0) + 1);
+        })
+        .catch(async e => {
+          await this.setModalKategorieOpen(false);
+          await infoToast("Abrufen der Fahrräder fehlgeschlagen", `Fehler: ${e.message}`);
+        })
+        .finally(() => loadingController.dismiss());
+  }
+
+  /**
    * Beginnt eine neue Ausleihe. Verwendet hierzu das zuvor ausgewählte Fahrrad und
    * die eingestellte Zeit in {@link auswahlDauer}.
    */
@@ -241,19 +305,20 @@ export default class TabMap extends Vue {
 
     this.benutzerService.neueAusleihe(this.auswahlRad.id, new Date(),
         this.nowPlusHours(this.auswahlDauer))
-    .then(async () => {
-      await this.setModalAusleiheOpen(false);
-      await this.setModalRadListeOpen(false);
-      await actionToast(
-          () => this.$router.push("/tabs/ausleihen"),
-          "Ansehen", "Ausleihe erfolgreich",
-          "Details zur Ausleihe befinden sich im 'Ausleihen'-Tab.",
-          "success"
-      );
-    })
-    .catch(e => infoToast("Etwas ist schiefgelaufen",
-        `Fehler: ${e.message}`))
-    .finally(() => loading.dismiss());
+        .then(async () => {
+          await this.setModalAusleiheOpen(false);
+          await this.setModalRadListeOpen(false);
+          await this.setModalKategorieOpen(false);
+          await actionToast(
+              () => this.$router.push({path: "/tabs/ausleihen", query: {refresh: "yes"}}),
+              "Ansehen", "Ausleihe erfolgreich",
+              "Details zur Ausleihe befinden sich im 'Ausleihen'-Tab.",
+              "success"
+          );
+        })
+        .catch(e => infoToast("Etwas ist schiefgelaufen",
+            `Fehler: ${e.message}`))
+        .finally(() => loading.dismiss());
   }
 
   /**
@@ -303,10 +368,61 @@ export default class TabMap extends Vue {
 
 .bottom-buttons-container {
   bottom: .5em;
-  /* TODO: Further styling */
+  /* //TODO: Further styling */
 }
 
 .list-hint {
-  /* TODO: Center + Styling */
+  /* //TODO: Center + Styling */
+}
+
+.rad-icon {
+  max-width: 10em;
+}
+
+.marker-icon {
+  width: 2.5em;
+  height: 2.5em;
+}
+
+.info-container {
+  padding-top: .5em;
+  padding-bottom: .5em;
+}
+
+.info-container > h2 {
+  font-size: medium;
+  font-weight: bold;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.info-container > p {
+  font-size: medium;
+  font-weight: lighter;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+.title-container {
+  margin-left: .5em;
+  margin-right: .5em;
+}
+
+.title-container > h2 {
+  font-weight: lighter;
+  font-size: large;
+  margin-top: 4px;
+  margin-bottom: 4px
+}
+
+.title-container > p {
+  font-weight: lighter;
+  font-size: small;
+  margin-top: 4px;
+  margin-bottom: 4px
+}
+
+.time-container {
+  text-align: center;
 }
 </style>
