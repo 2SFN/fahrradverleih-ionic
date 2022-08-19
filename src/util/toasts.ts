@@ -6,7 +6,7 @@ import {toastController} from "@ionic/vue";
  */
 
 export const actionToast = async (onAction: () => void, actionLabel: string, header: string,
-                                  message: string, color = "primary") => {
+                                  message?: string, color = "primary", duration?: number) => {
     const toast = await toastController.create({
         header: header, message: message, color: color,
         buttons: [{
@@ -16,7 +16,8 @@ export const actionToast = async (onAction: () => void, actionLabel: string, hea
                 onAction();
             }
         }],
-        cssClass: 'toast-elevated'
+        cssClass: 'toast-elevated',
+        duration: duration
     });
     await toast.present();
 }
