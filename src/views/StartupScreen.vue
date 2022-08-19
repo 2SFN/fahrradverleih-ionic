@@ -1,39 +1,48 @@
 <template>
   <ion-page>
-    <ion-content class="brand-bg">
-      <div class="startup-header">
-        <ion-img src="assets/icon/monheim.svg" class="ic"/>
-        <p>Fahrradverleih</p>
-        <p>Monheim am Rhein</p>
-      </div>
-
-      <div class="startup-content">
-        <!-- Authentifizierung / Token prüfen -->
-        <div id="auth" v-show="state === 'auth'">
-          <ion-spinner name="crescent" color="light"></ion-spinner>
-          <p>Verbinde</p>
+    <ion-content>
+      <div class="brand-bg">
+        <div class="startup-header">
+          <ion-img src="assets/icon/monheim.svg" class="ic"/>
+          <h2>Fahrradverleih</h2>
+          <h3>Monheim am Rhein</h3>
         </div>
 
-        <!-- Willkommensseite -->
-        <div id="welcome" v-show="state === 'welcome'">
-          <h1>Willkommen!</h1>
-          <ion-button fill="outline" @click="_redirect('login')">Anmelden</ion-button>
-          <p>oder</p>
-          <ion-button fill="outline" @click="_redirect('register')">Registrieren</ion-button>
-        </div>
+        <div class="startup-content">
+          <!-- Authentifizierung / Token prüfen -->
+          <div id="auth" v-show="state === 'auth'">
+            <ion-spinner name="crescent" color="light"></ion-spinner>
+            <p>Verbinde</p>
+          </div>
 
-        <!-- Login-Formular -->
-        <div id="login" v-show="state === 'login'">
-          <!-- TODO: Icons & Style -->
-          <ion-input id="login-mail" type="email" placeholder="E-Mail Adresse" v-model="loginMail"></ion-input>
-          <ion-input id="login-pass" type="password" placeholder="Passwort" v-model="loginPass"></ion-input>
-          <ion-button fill="outline" @click="login()">Anmelden</ion-button>
-        </div>
+          <!-- Willkommensseite -->
+          <div id="welcome" v-show="state === 'welcome'">
+            <h1>Willkommen!</h1>
+            <ion-button fill="outline" @click="_redirect('login')">Anmelden</ion-button>
+            <p>oder</p>
+            <ion-button fill="outline" @click="_redirect('register')">Registrieren</ion-button>
+          </div>
 
-        <!-- Registrierung -->
-        <div id="register" v-show="state === 'register'">
-          <ion-title>Registrieren</ion-title>
-          <!-- Funktion im Rahmen des Projektes nicht implementiert -->
+          <!-- Login-Formular -->
+          <div id="login" v-show="state === 'login'">
+            <div class="icon-input">
+              <ion-icon src="assets/icon/ic_email.svg" size="large"></ion-icon>
+              <ion-label>E-Mail Adresse</ion-label>
+              <ion-input id="login-mail" type="email" v-model="loginMail"></ion-input>
+            </div>
+            <div class="icon-input">
+              <ion-icon src="assets/icon/ic_lock.svg" size="large"></ion-icon>
+              <ion-label>Passwort</ion-label>
+              <ion-input id="login-pass" type="password" v-model="loginPass"></ion-input>
+            </div>
+            <ion-button fill="outline" @click="login()">Anmelden</ion-button>
+          </div>
+
+          <!-- Registrierung -->
+          <div id="register" v-show="state === 'register'">
+            <ion-title>Registrieren</ion-title>
+            <!-- Funktion im Rahmen des Projektes nicht implementiert -->
+          </div>
         </div>
       </div>
     </ion-content>
@@ -44,9 +53,10 @@
 import {
   IonButton,
   IonContent,
-  IonHeader,
+  IonHeader, IonIcon,
   IonImg,
   IonInput,
+  IonItem,
   IonLabel,
   IonPage,
   IonSpinner,
@@ -62,7 +72,7 @@ import BenutzerService from "@/services/benutzer-service";
 @Options({
   components: {
     IonPage, IonToolbar, IonContent, IonTitle, IonLabel, IonButton, IonHeader, IonImg,
-    IonSpinner, IonInput
+    IonSpinner, IonInput, IonItem, IonIcon
   }
 })
 export default class StartupScreen extends Vue {
@@ -195,39 +205,145 @@ export default class StartupScreen extends Vue {
 
 <style scoped>
 .brand-bg {
-  --background: white url('../../public/assets/picture/startup.webp') no-repeat center top fixed;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 0 0;
+  grid-template-areas:
+    "header"
+    "content";
+
+  height: 100%;
+  width: 100%;
+
+  --background: white url('../../public/assets/picture/startup.webp') no-repeat cover fixed center;
+  background: white url('../../public/assets/picture/startup.webp') no-repeat fixed center;
+  -webkit-background-size: cover;
   background-size: cover;
 }
 
 .startup-header {
-  background: rgba(2, 151, 220, 0.71);
+  grid-area: header;
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: .5em 1em;
+  grid-template-areas:
+    "icon title"
+    "icon subtitle";
+  justify-content: start;
+  align-content: center;
+  justify-items: start;
+  align-items: center;
+
+  background: rgba(2, 151, 220, 0.35);
   color: white;
   height: 7em;
 }
 
 .startup-header > .ic {
+  grid-area: icon;
   height: 6em;
+
+  margin: 1em;
+}
+
+.startup-header h2 {
+  grid-area: title;
+  margin: 0;
+  justify-self: stretch;
+  align-self: end;
+
+  font-size: larger;
+  font-weight: normal;
+}
+
+.startup-header h3 {
+  grid-area: subtitle;
+  margin: 0;
+  justify-self: stretch;
+  align-self: start;
+
+  font-size: larger;
+  font-weight: lighter;
 }
 
 .startup-content {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  grid-area: content;
 
+  justify-self: stretch;
+  align-self: center;
   text-align: center;
 
-  background: rgba(255, 255, 255, 0.56);
+  background: rgba(255, 255, 255, 0.40);
   border: white 0;
-  border-radius: 2em;
+  border-radius: 1.5em;
 
   padding: 1em;
   margin: 2em;
+  max-width: 35em;
+
+  color: white;
 }
 
-#auth > p {
+.startup-content h1 {
+  font-weight: lighter;
+  font-size: x-large;
+
+  margin-bottom: 1.3em;
+  margin-top: .3em;
+}
+
+.startup-content p {
+  font-weight: lighter;
+}
+
+.startup-content ion-button {
+  --border-radius: .75em;
+  --border-color: white;
+  --border-width: 1px;
+
   color: white;
+  font-weight: normal;
+
+  min-width: 15em;
+}
+
+.icon-input {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 0.1em .5em;
+  grid-template-areas:
+    "icon label"
+    "icon input";
+
+  margin-bottom: 1em;
+}
+
+.icon-input > ion-icon {
+  justify-self: start;
+  align-self: end;
+  grid-area: icon;
+}
+
+.icon-input > ion-label {
+  justify-self: start;
+  align-self: end;
+  grid-area: label;
+
+  font-size: small;
+  font-weight: lighter;
+}
+
+.icon-input > ion-input {
+  justify-self: stretch;
+  align-self: end;
+  grid-area: input;
+
+  border-bottom: 1px solid white;
+  text-align: start;
 }
 
 </style>
