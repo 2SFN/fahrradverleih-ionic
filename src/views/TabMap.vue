@@ -21,23 +21,25 @@
         </ion-toolbar>
 
         <ion-list>
-          <ion-item v-for="typ in anzahlProTyp.keys()" :key="typ" lines="full">
+          <ion-item v-for="typ in anzahlProTyp.keys()" :key="typ" lines="full" class="category-item">
             <rad-icon :radtyp="typ" class="rad-icon" slot="start"></rad-icon>
             <div class="info-container">
-              <h2>{{typ}}</h2>
-              <p>Anzahl: {{anzahlProTyp.get(typ)}}</p>
-              <ion-button fill="outline" @click="setModalRadListeOpen(true, auswahlStation, typ)">
+              <h2>{{ typ }}</h2>
+              <p>Verfügbar: {{ anzahlProTyp.get(typ) }}</p>
+              <ion-button fill="outline" @click="setModalRadListeOpen(true, auswahlStation, typ)"
+                          class="block-button bb-primary" expand="block">
                 Auswählen
               </ion-button>
             </div>
           </ion-item>
 
-          <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
+          <end-of-list-hint></end-of-list-hint>
         </ion-list>
 
         <div class="bottom-buttons-container" slot="fixed">
           <ion-button color="medium" fill="outline" @click="setModalKategorieOpen(false)"
-                      expand="block">Zurück</ion-button>
+                      expand="block" class="block-button bb-medium">Zurück
+          </ion-button>
         </div>
       </ion-content>
     </ion-modal>
@@ -54,13 +56,22 @@
         </ion-toolbar>
 
         <ion-list>
-          <rad-item v-for="rad in raeder" :key="rad" :rad="rad"
-                    @click="setModalAusleiheOpen(true, rad)"></rad-item>
-          <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
+          <rad-item v-for="rad in raeder" :key="rad" :rad="rad">
+            <ion-button expand="block" class="block-button bb-primary" fill="outline">
+              Für Später Reservieren
+            </ion-button>
+            <ion-button expand="block" class="block-button bb-primary" fill="outline"
+                        @click="setModalAusleiheOpen(true, rad)">
+              Jetzt Buchen
+            </ion-button>
+          </rad-item>
+          <end-of-list-hint></end-of-list-hint>
         </ion-list>
 
         <div class="bottom-buttons-container" slot="fixed">
-          <ion-button color="medium" fill="outline" @click="setModalRadListeOpen(false)">Zurück</ion-button>
+          <ion-button class="block-button bb-medium" expand="block" fill="outline"
+                      @click="setModalRadListeOpen(false)">Zurück
+          </ion-button>
         </div>
       </ion-content>
     </ion-modal>
@@ -79,35 +90,31 @@
         <rad-item v-if="auswahlRad !== null" :rad="auswahlRad"></rad-item>
 
         <div class="time-container">
-          <p>Rad ausleihen für</p>
-          <div class="time-value">
-            <h2>{{ auswahlDauer }}</h2>
-            <p>h</p>
+          <p class="header">Rad ausleihen für</p>
+          <p class="time">{{ auswahlDauer }}</p>
+          <p class="unit">h</p>
+          <div class="info" v-if="auswahlRad !== null">
+            <p>
+              Gesamtpreis:
+              {{ (auswahlDauer / auswahlRad.typ.tarif.taktung) * auswahlRad.typ.tarif.preis.betrag }}
+              {{ auswahlRad.typ.tarif.preis.iso4217 }}
+            </p>
+            <p>Rückgabe bis {{ nowPlusHours(auswahlDauer).toLocaleTimeString() }}</p>
           </div>
-          <p v-if="auswahlRad !== null">
-            Gesamtpreis:
-            {{ (auswahlDauer / auswahlRad.typ.tarif.taktung) * auswahlRad.typ.tarif.preis.betrag }}
-            {{ auswahlRad.typ.tarif.preis.iso4217 }}
-          </p>
-          <p v-if="auswahlRad !== null">
-            Rückgabe bis {{ nowPlusHours(auswahlDauer).toLocaleTimeString() }}
-          </p>
 
-          <div class="time-buttons">
-            <ion-button @click="dauerAnpassen(false)" aria-label="Dauer verringern"
-                        fill="outline">-
-            </ion-button>
-            <ion-button @click="dauerAnpassen(true)" aria-label="Dauer erhöhen"
-                        fill="outline">+
-            </ion-button>
-          </div>
+          <ion-button @click="dauerAnpassen(false)" aria-label="Dauer verringern"
+                      fill="outline" class="minus block-button bb-primary">−
+          </ion-button>
+          <ion-button @click="dauerAnpassen(true)" aria-label="Dauer erhöhen"
+                      fill="outline" class="plus block-button bb-primary">+
+          </ion-button>
         </div>
 
         <div class="bottom-buttons-container" slot="fixed">
-          <ion-button color="primary" fill="outline"
+          <ion-button color="primary" fill="outline" expand="block" class="block-button bb-primary"
                       @click="beginneAusleihe()">Buchung Bestätigen
           </ion-button>
-          <ion-button color="medium" fill="outline"
+          <ion-button color="medium" fill="outline" expand="block" class="block-button bb-medium"
                       @click="setModalAusleiheOpen(false)">Zurück
           </ion-button>
         </div>
@@ -141,10 +148,13 @@ import {actionToast, infoToast, retryToast} from "@/util/toasts";
 import {Loader} from "@googlemaps/js-api-loader";
 import RadIcon from "@/components/RadIcon.vue";
 import RadItem from "@/components/RadItem.vue";
+import EndOfListHint from "@/components/EndOfListHint.vue";
+import "@/theme/buttons.css";
 
 // noinspection JSMethodCanBeStatic
 @Options({
   components: {
+    EndOfListHint,
     RadItem,
     RadIcon, IonHeader, IonToolbar, IonTitle, IonContent, IonPage, IonModal, IonButton,
     IonList, IonItem, IonLabel, IonIcon
@@ -198,41 +208,41 @@ export default class TabMap extends Vue {
       gestureHandling: "greedy",
       minZoom: 10,
       styles: [
-        { featureType: 'administrative.country', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'administrative.land_parcel', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'administrative.land_parcel', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-        { featureType: 'administrative.locality', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'administrative.neighborhood', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'administrative.province', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#e0e0e0' }] },
-        { featureType: 'landscape.natural', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'landscape.natural.landcover', elementType: 'geometry.fill', stylers: [{ color: '#858585' }] },
-        { featureType: 'landscape.natural.terrain', elementType: 'geometry.fill', stylers: [{ color: '#a6cb84' }] },
-        { featureType: 'poi.attraction', elementType: 'geometry.fill', stylers: [{ color: '#71af3e' }] },
-        { featureType: 'poi.attraction', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-        { featureType: 'poi.business', elementType: 'geometry.fill', stylers: [{ color: '#c4c4c4' }] },
-        { featureType: 'poi.business', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.government', elementType: 'geometry.fill', stylers: [{ color: '#9c9c9c' }] },
-        { featureType: 'poi.government', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.medical', elementType: 'geometry.fill', stylers: [{ color: '#0da4de' }] },
-        { featureType: 'poi.medical', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.park', elementType: 'geometry.fill', stylers: [{ color: '#71af3e' }] },
-        { featureType: 'poi.park', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.park', elementType: 'labels.text', stylers: [{ visibility: 'off' }] },
-        { featureType: 'poi.place_of_worship', elementType: 'geometry.fill', stylers: [{ color: '#0da4de' }] },
-        { featureType: 'poi.place_of_worship', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.place_of_worship', elementType: 'labels.text.fill', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.school', elementType: 'geometry.fill', stylers: [{ color: '#d1d1d1' }] },
-        { featureType: 'poi.school', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.school', elementType: 'labels.text.fill', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.sports_complex', elementType: 'geometry.fill', stylers: [{ color: '#71af3e' }] },
-        { featureType: 'poi.sports_complex', elementType: 'labels.icon', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'poi.sports_complex', elementType: 'labels.text.fill', stylers: [{ color: '#6b6b6b' }] },
-        { featureType: 'road.local', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
-        { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-        { featureType: 'water', elementType: 'geometry.stroke', stylers: [{ visibility: 'off' }] },
-        { featureType: 'water', elementType: 'labels.text', stylers: [{ color: '#ffffff' }] },
+        {featureType: 'administrative.country', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'administrative.land_parcel', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'administrative.land_parcel', elementType: 'labels', stylers: [{visibility: 'off'}]},
+        {featureType: 'administrative.locality', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'administrative.neighborhood', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'administrative.province', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{color: '#e0e0e0'}]},
+        {featureType: 'landscape.natural', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'landscape.natural.landcover', elementType: 'geometry.fill', stylers: [{color: '#858585'}]},
+        {featureType: 'landscape.natural.terrain', elementType: 'geometry.fill', stylers: [{color: '#a6cb84'}]},
+        {featureType: 'poi.attraction', elementType: 'geometry.fill', stylers: [{color: '#71af3e'}]},
+        {featureType: 'poi.attraction', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.business', stylers: [{visibility: 'off'}]},
+        {featureType: 'poi.business', elementType: 'geometry.fill', stylers: [{color: '#c4c4c4'}]},
+        {featureType: 'poi.business', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.government', elementType: 'geometry.fill', stylers: [{color: '#9c9c9c'}]},
+        {featureType: 'poi.government', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.medical', elementType: 'geometry.fill', stylers: [{color: '#0da4de'}]},
+        {featureType: 'poi.medical', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.park', elementType: 'geometry.fill', stylers: [{color: '#71af3e'}]},
+        {featureType: 'poi.park', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.park', elementType: 'labels.text', stylers: [{visibility: 'off'}]},
+        {featureType: 'poi.place_of_worship', elementType: 'geometry.fill', stylers: [{color: '#0da4de'}]},
+        {featureType: 'poi.place_of_worship', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.place_of_worship', elementType: 'labels.text.fill', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.school', elementType: 'geometry.fill', stylers: [{color: '#d1d1d1'}]},
+        {featureType: 'poi.school', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.school', elementType: 'labels.text.fill', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.sports_complex', elementType: 'geometry.fill', stylers: [{color: '#71af3e'}]},
+        {featureType: 'poi.sports_complex', elementType: 'labels.icon', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'poi.sports_complex', elementType: 'labels.text.fill', stylers: [{color: '#6b6b6b'}]},
+        {featureType: 'road.local', elementType: 'geometry.fill', stylers: [{color: '#ffffff'}]},
+        {featureType: 'road.local', elementType: 'labels', stylers: [{visibility: 'off'}]},
+        {featureType: 'water', elementType: 'geometry.stroke', stylers: [{visibility: 'off'}]},
+        {featureType: 'water', elementType: 'labels.text', stylers: [{color: '#ffffff'}]},
       ]
     }
 
@@ -328,7 +338,7 @@ export default class TabMap extends Vue {
         .then(r => {
           // Zähle die Anzahl von Rädern pro Typenbezeichnung
           this.anzahlProTyp.clear();
-          for(const c of r)
+          for (const c of r)
             this.anzahlProTyp.set(c.typ.bezeichnung, (this.anzahlProTyp.get(c.typ.bezeichnung) || 0) + 1);
         })
         .catch(async e => {
@@ -413,16 +423,19 @@ export default class TabMap extends Vue {
 }
 
 .bottom-buttons-container {
+  width: 100%;
   bottom: .5em;
-  /* //TODO: Further styling */
-}
 
-.list-hint {
-  /* //TODO: Center + Styling */
+  padding: 0 .5em;
 }
 
 .rad-icon {
-  max-width: 10em;
+  width: 7.5em;
+}
+
+.category-item {
+  --padding-bottom: .5em;
+  --padding-top: .5em;
 }
 
 .marker-icon {
@@ -431,6 +444,9 @@ export default class TabMap extends Vue {
 }
 
 .info-container {
+  justify-self: stretch;
+  width: 100%;
+
   padding-top: .5em;
   padding-bottom: .5em;
 }
@@ -445,8 +461,8 @@ export default class TabMap extends Vue {
 .info-container > p {
   font-size: medium;
   font-weight: lighter;
-  margin-top: 4px;
-  margin-bottom: 2px;
+  margin-top: .3em;
+  margin-bottom: .6em;
 }
 
 .title-container {
@@ -471,4 +487,64 @@ export default class TabMap extends Vue {
 .time-container {
   text-align: center;
 }
+
+.time-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto;
+  gap: 1.5em 1em;
+  grid-template-areas:
+    "header header"
+    "time unit"
+    "info info"
+    "minus plus";
+  justify-content: center;
+  align-content: start;
+  justify-items: stretch;
+  align-items: start;
+
+  margin: 3em 1em;
+}
+
+.time-container p {
+  margin: 0;
+
+  font-weight: lighter;
+  font-size: medium;
+  line-height: 1.3;
+}
+
+.time-container > .header {
+  grid-area: header;
+}
+
+.time-container > .time {
+  grid-area: time;
+  justify-self: end;
+
+  font-size: xxx-large;
+  font-weight: bold;
+}
+
+.time-container > .unit {
+  grid-area: unit;
+  justify-self: start;
+
+  font-size: xxx-large;
+  font-weight: lighter;
+  color: var(--ion-color-medium, grey);
+}
+
+.time-container > .info {
+  grid-area: info;
+}
+
+.time-container > .minus {
+  grid-area: minus;
+}
+
+.time-container > .plus {
+  grid-area: plus;
+}
+
 </style>

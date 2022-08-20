@@ -1,0 +1,20 @@
+.block-button {
+    --border-radius: 0;
+    --border-width: 1px;
+    --padding-top: .5em;
+    --padding-bottom: .5em;
+    --padding-left: .3em;
+    --padding-right: .3em;
+}
+
+.bb-primary {
+    --background: none;
+    --border-color: var(--ion-color-primary, grey);
+    --color: var(--ion-color-primary, grey);
+}
+
+.bb-medium {
+    --background: none;
+    --border-color: var(--ion-color-medium, grey);
+    --color: var(--ion-color-medium, grey);
+}
