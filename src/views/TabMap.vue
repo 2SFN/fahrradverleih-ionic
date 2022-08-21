@@ -36,7 +36,7 @@
           <end-of-list-hint></end-of-list-hint>
         </ion-list>
 
-        <div class="bottom-buttons-container" slot="fixed">
+        <div class="bb-container" slot="fixed">
           <ion-button color="medium" fill="outline" @click="setModalKategorieOpen(false)"
                       expand="block" class="block-button bb-medium">Zurück
           </ion-button>
@@ -68,7 +68,7 @@
           <end-of-list-hint></end-of-list-hint>
         </ion-list>
 
-        <div class="bottom-buttons-container" slot="fixed">
+        <div class="bb-container" slot="fixed">
           <ion-button class="block-button bb-medium" expand="block" fill="outline"
                       @click="setModalRadListeOpen(false)">Zurück
           </ion-button>
@@ -110,7 +110,7 @@
           </ion-button>
         </div>
 
-        <div class="bottom-buttons-container" slot="fixed">
+        <div class="bb-container" slot="fixed">
           <ion-button color="primary" fill="outline" expand="block" class="block-button bb-primary"
                       @click="beginneAusleihe()">Buchung Bestätigen
           </ion-button>
@@ -420,13 +420,6 @@ export default class TabMap extends Vue {
 #gmap {
   width: 100%;
   height: 100%;
-}
-
-.bottom-buttons-container {
-  width: 100%;
-  bottom: .5em;
-
-  padding: 0 .5em;
 }
 
 .rad-icon {

@@ -47,7 +47,7 @@
           </ion-radio-group>
         </ion-list>
 
-        <div class="dialog-buttons-container" slot="fixed">
+        <div class="bb-container" slot="fixed">
           <ion-button color="medium" fill="outline" expand="block" class="block-button bb-medium"
                       @click="setModalStationOpen(false)">
             Abbrechen
@@ -201,12 +201,6 @@ export default class TabAusleihen extends Vue {
 </script>
 
 <style scoped>
-.dialog-buttons-container {
-  width: 100%;
-  bottom: .5em;
-  padding: 0 .5em;
-}
-
 .dialog-toolbar {
   margin: .5em 1em;
 }

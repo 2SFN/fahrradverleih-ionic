@@ -18,3 +18,9 @@
     --border-color: var(--ion-color-medium, grey);
     --color: var(--ion-color-medium, grey);
 }
+
+.bb-container {
+    width: 100%;
+    bottom: .5em;
+    padding: 0 .5em;
+}

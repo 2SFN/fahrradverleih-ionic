@@ -21,21 +21,26 @@
       <icon-input label="E-Mail Adresse" v-model:value="benutzer.email"
                   icon="assets/icon/ic_email.svg"></icon-input>
 
-      <ion-item>
-        <ion-icon src="assets/icon/ic_lock.svg" size="large" color="medium" slot="start"></ion-icon>
-        <ion-button expand="block" fill="outline" color="primary">Anmeldung ändern</ion-button>
-      </ion-item>
+      <div class="action-container">
+        <ion-icon src="assets/icon/ic_lock.svg" size="large" color="medium"></ion-icon>
+        <ion-button expand="block" fill="outline" color="primary"
+                    class="block-button">
+          Anmeldung ändern
+        </ion-button>
+      </div>
 
       <icon-input label="Profil ID" v-model:value="benutzer.id" editable="false"
                   icon="assets/icon/ic_link.svg"></icon-input>
     </ion-content>
 
-    <ion-footer>
-      <ion-button color="danger" expand="block" fill="outline"
-                  @click="logoutDialog()">Abmelden</ion-button>
-      <ion-button color="primary" expand="block" @click="apply()"
-                  fill="outline" >Änderungen übernehmen</ion-button>
-    </ion-footer>
+    <div slot="fixed" class="bb-container">
+      <ion-button color="danger" expand="block" fill="outline" class="block-button" @click="logoutDialog()">
+        Abmelden
+      </ion-button>
+      <ion-button color="primary" expand="block" @click="apply()" class="block-button" fill="outline">
+        Änderungen übernehmen
+      </ion-button>
+    </div>
 
   </ion-page>
 </template>
@@ -63,8 +68,10 @@ import Prefs from "@/util/prefs";
 
 @Options({
   name: 'TabProfil',
-  components: {IconInput, IonHeader, IonToolbar, IonTitle, IonContent, IonPage, IonItem,
-    IonIcon, IonButton, IonFooter}
+  components: {
+    IconInput, IonHeader, IonToolbar, IonTitle, IonContent, IonPage, IonItem,
+    IonIcon, IonButton, IonFooter
+  }
 })
 export default class TabProfil extends Vue {
   private benutzerService = container.resolve(BenutzerService);
@@ -74,15 +81,15 @@ export default class TabProfil extends Vue {
   public async mounted(): Promise<void> {
     // Profilinformationen abrufen
     this.benutzerService.getBenutzer()
-    .then(b => this.benutzer = b)
-    .catch(e => {
-      toastController.create({
-        header: "Abrufen der Profildaten fehlgeschlagen",
-        message: `Fehler: ${e.message}`,
-        color: "warning",
-        duration: 3000
-      }).then(t => t.present());
-    });
+        .then(b => this.benutzer = b)
+        .catch(e => {
+          toastController.create({
+            header: "Abrufen der Profildaten fehlgeschlagen",
+            message: `Fehler: ${e.message}`,
+            color: "warning",
+            duration: 3000
+          }).then(t => t.present());
+        });
   }
 
   public async apply(): Promise<void> {
@@ -118,3 +125,37 @@ export default class TabProfil extends Vue {
 
 }
 </script>
+
+<style scoped>
+ion-content {
+  --padding-start: 1em;
+  --padding-end: 1em;
+  --padding-top: 1em;
+}
+
+.action-container {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto;
+  gap: 0 .8em;
+  grid-template-areas: "icon action";
+
+  margin-bottom: 1em;
+}
+
+.action-container > ion-icon {
+  grid-area: icon;
+  align-self: center;
+  justify-self: start;
+}
+
+.action-container > ion-button {
+  grid-area: action;
+  align-self: end;
+  justify-self: stretch;
+
+  margin: 4px 0;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+}
+</style>

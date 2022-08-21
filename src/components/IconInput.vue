@@ -1,15 +1,15 @@
 <template>
-  <ion-item>
-    <ion-icon :src="icon" slot="start" color="medium" size="large"></ion-icon>
-    <ion-label color="medium" position="top">{{label}}</ion-label>
+  <div class="icon-input">
+    <ion-icon :src="icon" color="medium" size="large"></ion-icon>
+    <ion-label color="medium">{{ label }}</ion-label>
     <ion-input v-on:input="handleInput($event.target.value)" :value="value" :type="type"
-      color="medium" :readonly="!editable"></ion-input>
-  </ion-item>
+               color="medium" :readonly="!editable"></ion-input>
+  </div>
 </template>
 
 <script lang="ts">
 
-import {Options, Vue, prop} from "vue-class-component";
+import {Options, prop, Vue} from "vue-class-component";
 import {IonIcon, IonInput, IonItem, IonLabel} from "@ionic/vue";
 
 /**
@@ -17,12 +17,12 @@ import {IonIcon, IonInput, IonItem, IonLabel} from "@ionic/vue";
  *
  * Wird verwendet mit {@code class ... extends Vue.with(...)}.
  */
-class IconInputProps {
-  label = prop<string>({ default: '' });
-  type = prop<string>({default: 'text' });
-  icon = prop<string>({ default: '' });
-  value = prop<string>({ default: '' });
-  editable = prop<boolean>({ default: true });
+export class IconInputProps {
+  label = prop<string>({default: ''});
+  type = prop<string>({default: 'text'});
+  icon = prop<string>({default: ''});
+  value = prop<string>({default: ''});
+  editable = prop<boolean>({default: true});
 }
 
 /**
@@ -48,5 +48,42 @@ export default class IconInput extends Vue.with(IconInputProps) {
 </script>
 
 <style scoped>
+.icon-input {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 0.1em .8em;
+  grid-template-areas:
+    "icon label"
+    "icon input";
 
+  margin-bottom: 1em;
+}
+
+.icon-input > ion-icon {
+  justify-self: start;
+  align-self: end;
+  grid-area: icon;
+}
+
+.icon-input > ion-label {
+  justify-self: start;
+  align-self: end;
+  grid-area: label;
+
+  font-size: small;
+  font-weight: lighter;
+}
+
+.icon-input > ion-input {
+  justify-self: stretch;
+  align-self: end;
+  grid-area: input;
+
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+
+  border: 1px solid var(--ion-color-medium, grey);
+  text-align: start;
+}
 </style>
