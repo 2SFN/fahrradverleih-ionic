@@ -19,34 +19,44 @@
       <ion-list>
         <rad-item v-for="item in ausleihen" :key="item" :rad="item.fahrrad">
           <p>{{ transformZeitEnde(item) }}</p>
-          <ion-button fill="outline" v-if="item.bis.getTime() > new Date().getTime()"
-                      @click="setModalStationOpen(true, item)">Zurückgeben
+          <ion-button fill="outline" v-if="item.bis.getTime() > new Date().getTime()" expand="block"
+                      @click="setModalStationOpen(true, item)" class="block-button bb-primary">
+            Zurückgeben
           </ion-button>
         </rad-item>
 
-        <ion-label color="medium" class="list-hint">Keine weiteren Elemente</ion-label>
+        <end-of-list-hint></end-of-list-hint>
       </ion-list>
     </ion-content>
 
     <!-- Modal: Stations-Auswahl (bei Rückgabe) -->
     <ion-modal id="select-station" animated="true" :is-open="modalStationOpen">
       <ion-content>
-        <ion-toolbar>
-          <ion-title>Rückgabe-Station auswählen</ion-title>
-          <ion-label v-if="auswahlAusleihe !== null">Rad-ID: {{ auswahlAusleihe.fahrrad.id }}</ion-label>
+        <ion-toolbar class="dialog-toolbar">
+          <h2>Rückgabe-Station auswählen</h2>
+          <h3 v-if="auswahlAusleihe !== null">Rad-ID: {{ auswahlAusleihe.fahrrad.id }}</h3>
         </ion-toolbar>
 
         <ion-list>
           <ion-radio-group>
-            <ion-item v-for="station in stationen" :key="station" @click="auswahlStation = station">
-              <ion-radio :value="station.id"></ion-radio>
+            <ion-item v-for="station in stationen" :key="station" lines="none"
+                      @click="auswahlStation = station">
               <ion-label>{{ station.bezeichnung }}</ion-label>
+              <ion-radio :value="station.id" slot="start"></ion-radio>
             </ion-item>
           </ion-radio-group>
         </ion-list>
 
-        <ion-button color="medium" @click="setModalStationOpen(false)">Abbrechen</ion-button>
-        <ion-button color="primary" @click="beendeAusleihe()">Rückgabe bestätigen</ion-button>
+        <div class="dialog-buttons-container" slot="fixed">
+          <ion-button color="medium" fill="outline" expand="block" class="block-button bb-medium"
+                      @click="setModalStationOpen(false)">
+            Abbrechen
+          </ion-button>
+          <ion-button color="primary" fill="outline" expand="block" class="block-button bb-primary"
+                      @click="beendeAusleihe()">
+            Rückgabe bestätigen
+          </ion-button>
+        </div>
       </ion-content>
     </ion-modal>
 
@@ -66,10 +76,13 @@ import {
   IonModal,
   IonPage,
   IonRadio,
-  IonRadioGroup, IonRefresher, IonRefresherContent,
+  IonRadioGroup,
+  IonRefresher,
+  IonRefresherContent,
   IonTitle,
   IonToolbar,
-  loadingController, RefresherCustomEvent
+  loadingController,
+  RefresherCustomEvent
 } from '@ionic/vue';
 import RadIcon from "@/components/RadIcon.vue";
 import Ausleihe from "@/model/ausleihe";
@@ -79,11 +92,14 @@ import Station from "@/model/station";
 import StationenService from "@/services/stationen-service";
 import {infoToast, retryToast} from "@/util/toasts";
 import RadItem from "@/components/RadItem.vue";
+import EndOfListHint from "@/components/EndOfListHint.vue";
+import "@/theme/buttons.css";
 
 // noinspection JSMethodCanBeStatic
 @Options({
   name: 'TabAusleihen',
   components: {
+    EndOfListHint,
     RadItem,
     RadIcon, IonList, IonItem, IonHeader, IonToolbar, IonTitle, IonContent, IonPage,
     IonLabel, IonButton, IonModal, IonRadioGroup, IonRadio, IonListHeader, IonRefresher,
@@ -185,7 +201,25 @@ export default class TabAusleihen extends Vue {
 </script>
 
 <style scoped>
-.list-hint {
-  /* TODO */
+.dialog-buttons-container {
+  width: 100%;
+  bottom: .5em;
+  padding: 0 .5em;
+}
+
+.dialog-toolbar {
+  margin: .5em 1em;
+}
+
+.dialog-toolbar > h2 {
+  margin: 0 0 .3em 0;
+  font-size: large;
+  font-weight: bold;
+}
+
+.dialog-toolbar > h3 {
+  margin: 0;
+  font-size: medium;
+  font-weight: lighter;
 }
 </style>
