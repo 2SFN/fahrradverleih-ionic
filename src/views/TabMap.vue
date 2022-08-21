@@ -150,6 +150,7 @@ import RadIcon from "@/components/RadIcon.vue";
 import RadItem from "@/components/RadItem.vue";
 import EndOfListHint from "@/components/EndOfListHint.vue";
 import "@/theme/buttons.css";
+import MapSymbols from "@/util/map-symbols";
 
 // noinspection JSMethodCanBeStatic
 @Options({
@@ -166,6 +167,7 @@ export default class TabMap extends Vue {
 
   private benutzerService: BenutzerService = container.resolve(BenutzerService);
   private stationenService: StationenService = container.resolve(StationenService);
+  private geolocationWatchId: number | null = null;
 
   private stationen: Station[] = []
   private raeder: Fahrrad[] = []
@@ -187,6 +189,14 @@ export default class TabMap extends Vue {
   public async mounted(): Promise<void> {
     await this.stationenService.init();
     this.ladeStationen();
+  }
+
+  public async unmounted(): Promise<void> {
+    // Falls vorhanden, Updates der Nutzerposition abbestellen
+    if(this.geolocationWatchId) {
+      navigator.geolocation.clearWatch(this.geolocationWatchId);
+      this.geolocationWatchId = null;
+    }
   }
 
   /**
@@ -244,22 +254,6 @@ export default class TabMap extends Vue {
         {featureType: 'water', elementType: 'geometry.stroke', stylers: [{visibility: 'off'}]},
         {featureType: 'water', elementType: 'labels.text', stylers: [{color: '#ffffff'}]},
       ]
-    }
-
-    // Eigenes Vektoricon für Marker, docs:
-    // https://developers.google.com/maps/documentation/javascript/reference/marker#Symbol
-    const markerIconPath = "M 12,2 C 8.1340068,2 5,5.1340068 5,9 c 0,5.25 7,13 7,13 0,0 7,-7.75 7,-13 0,-3.8659932 -3.134007,-7 -7,-7 z";
-    const iconAnchor = {x: 12, y: 17};
-    const iconLabelOrigin = {x: 12, y: 9};
-    const markerIcon = {
-      path: markerIconPath,
-      anchor: iconAnchor,
-      fillColor: "#0297DC",
-      fillOpacity: 1,
-      labelOrigin: iconLabelOrigin,
-      strokeColor: "white",
-      strokeWeight: 2,
-      scale: 2
     };
 
     this.mapLoader.load()
@@ -272,7 +266,7 @@ export default class TabMap extends Vue {
           this.stationen.forEach(s => {
             const marker = new google.maps.Marker({
               map: map,
-              icon: markerIcon as google.maps.Symbol,
+              icon: MapSymbols.ICON_MARKER_FULL as google.maps.Symbol,
               position: {lat: s.position.breite, lng: s.position.laenge},
               clickable: true, draggable: false,
               title: s.bezeichnung,
@@ -284,6 +278,27 @@ export default class TabMap extends Vue {
             });
             marker.addListener("click", () => this.setModalKategorieOpen(true, s));
           });
+
+          // Aktuelle Position anzeigen
+          if(navigator.geolocation) {
+            // Marker vorbereiten
+            const locationMarker = new google.maps.Marker({
+              map: map,
+              icon: MapSymbols.ICON_CIRCLE as google.maps.Symbol,
+              clickable: false, draggable: false,
+              title: "Benutzerposition"
+            });
+
+            this.geolocationWatchId = navigator.geolocation.watchPosition(
+                position => locationMarker.setPosition({
+                  lat: position.coords.latitude, lng: position.coords.longitude}),
+                null,
+                {
+                  maximumAge: 60*60*1000,
+                  enableHighAccuracy: true
+                }
+            );
+          }
         });
   }
 
