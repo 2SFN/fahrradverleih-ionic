@@ -151,6 +151,7 @@ import RadItem from "@/components/RadItem.vue";
 import EndOfListHint from "@/components/EndOfListHint.vue";
 import "@/theme/buttons.css";
 import MapSymbols from "@/util/map-symbols";
+import {AndroidPermissions} from "@awesome-cordova-plugins/android-permissions";
 
 // noinspection JSMethodCanBeStatic
 @Options({
@@ -162,6 +163,10 @@ import MapSymbols from "@/util/map-symbols";
   }
 })
 export default class TabMap extends Vue {
+  private static readonly LOCATION_PERMISSIONS = [
+      "android.permission.ACCESS_FINE_LOCATION",
+      "android.permission.ACCESS_COARSE_LOCATION"
+  ];
   private static readonly DAUER_MIN = 1;
   private static readonly DAUER_MAX = 48;
 
@@ -188,6 +193,9 @@ export default class TabMap extends Vue {
 
   public async mounted(): Promise<void> {
     await this.stationenService.init();
+    const hasPerm = await AndroidPermissions.hasPermission(TabMap.LOCATION_PERMISSIONS[0]);
+    console.log(`TabMap: Has location permissions -> ${hasPerm.hasPermission}`);
+    if(!hasPerm.hasPermission) await AndroidPermissions.requestPermissions(TabMap.LOCATION_PERMISSIONS);
     this.ladeStationen();
   }
 
@@ -299,7 +307,8 @@ export default class TabMap extends Vue {
                 }
             );
           }
-        });
+        })
+    .catch(e => console.log(`Maps-Loader: ${e.message}`));
   }
 
   /**
