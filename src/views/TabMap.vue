@@ -10,7 +10,8 @@
     </ion-content>
 
     <!-- Modal: Kategorie-Auswahl (nach Auswahl einer Station) -->
-    <ion-modal id="modal-kategorie" animated="true" :is-open="modalKategorieOpen">
+    <ion-modal id="modal-kategorie" animated="true" :is-open="modalKategorieOpen"
+               @didDismiss="setModalKategorieOpen(false)">
       <ion-content>
         <ion-toolbar color="primary">
           <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
@@ -45,7 +46,8 @@
     </ion-modal>
 
     <!-- Modal: Fahrrad-Auswahl (nach Auswahl eines Rad-Typs) -->
-    <ion-modal id="modal-rad" animated="true" :is-open="modalRadListeOpen">
+    <ion-modal id="modal-rad" animated="true" :is-open="modalRadListeOpen"
+               @didDismiss="setModalRadListeOpen(false)">
       <ion-content>
         <ion-toolbar color="primary">
           <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
@@ -56,9 +58,9 @@
         </ion-toolbar>
 
         <ion-list>
-          <rad-item v-for="rad in raeder" :key="rad" :rad="rad">
+          <rad-item v-for="rad in getRaederGefiltert()" :key="rad" :rad="rad">
             <ion-button expand="block" class="block-button bb-primary" fill="outline">
-              Für Später Reservieren
+              Reservieren
             </ion-button>
             <ion-button expand="block" class="block-button bb-primary" fill="outline"
                         @click="setModalAusleiheOpen(true, rad)">
@@ -77,7 +79,8 @@
     </ion-modal>
 
     <!-- Modal: Ausleihe vorbereiten (nach Auswahl eines Fahrrads) -->
-    <ion-modal id="modal-ausleihe" animated="true" :is-open="modalAusleiheOpen">
+    <ion-modal id="modal-ausleihe" animated="true" :is-open="modalAusleiheOpen"
+               @didDismiss="setModalAusleiheOpen(false)">
       <ion-content>
         <ion-toolbar color="primary">
           <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
@@ -176,6 +179,7 @@ export default class TabMap extends Vue {
 
   private stationen: Station[] = []
   private raeder: Fahrrad[] = []
+  private filter: string | null = null;
   private anzahlProTyp = new Map<string, number>();
   private auswahlStation: Station | null = null;
   private auswahlRad: Fahrrad | null = null;
@@ -322,10 +326,8 @@ export default class TabMap extends Vue {
   private async setModalRadListeOpen(open: boolean, station: Station | null = null,
                                      filter: string | null = null) {
     this.modalRadListeOpen = open;
+    this.filter = filter;
     this.auswahlStation = station;
-
-    if (this.raeder.length > 0 && filter !== null)
-      this.raeder = this.raeder.filter(r => r.typ.bezeichnung === filter);
   }
 
   /**
@@ -416,6 +418,10 @@ export default class TabMap extends Vue {
             "Laden der Stationen fehlgeschlagen",
             `Fehler: ${e.message}`
         ));
+  }
+
+  private getRaederGefiltert(): Fahrrad[] {
+    return this.raeder.filter(r => r.typ.bezeichnung === this.filter || this.filter === null);
   }
 
   /**
