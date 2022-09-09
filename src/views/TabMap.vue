@@ -155,6 +155,7 @@ import EndOfListHint from "@/components/EndOfListHint.vue";
 import "@/theme/buttons.css";
 import MapSymbols from "@/util/map-symbols";
 import {AndroidPermissions} from "@awesome-cordova-plugins/android-permissions";
+import {Capacitor} from "@capacitor/core";
 
 // noinspection JSMethodCanBeStatic
 @Options({
@@ -167,8 +168,8 @@ import {AndroidPermissions} from "@awesome-cordova-plugins/android-permissions";
 })
 export default class TabMap extends Vue {
   private static readonly LOCATION_PERMISSIONS = [
-      "android.permission.ACCESS_FINE_LOCATION",
-      "android.permission.ACCESS_COARSE_LOCATION"
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION"
   ];
   private static readonly DAUER_MIN = 1;
   private static readonly DAUER_MAX = 48;
@@ -197,15 +198,17 @@ export default class TabMap extends Vue {
 
   public async mounted(): Promise<void> {
     await this.stationenService.init();
-    const hasPerm = await AndroidPermissions.hasPermission(TabMap.LOCATION_PERMISSIONS[0]);
-    console.log(`TabMap: Has location permissions -> ${hasPerm.hasPermission}`);
-    if(!hasPerm.hasPermission) await AndroidPermissions.requestPermissions(TabMap.LOCATION_PERMISSIONS);
+    if (Capacitor.getPlatform() === "android") {
+      const hasPerm = await AndroidPermissions.hasPermission(TabMap.LOCATION_PERMISSIONS[0]);
+      console.log(`TabMap: Has location permissions -> ${hasPerm.hasPermission}`);
+      if (!hasPerm.hasPermission) await AndroidPermissions.requestPermissions(TabMap.LOCATION_PERMISSIONS);
+    }
     this.ladeStationen();
   }
 
   public async unmounted(): Promise<void> {
     // Falls vorhanden, Updates der Nutzerposition abbestellen
-    if(this.geolocationWatchId) {
+    if (this.geolocationWatchId) {
       navigator.geolocation.clearWatch(this.geolocationWatchId);
       this.geolocationWatchId = null;
     }
@@ -292,7 +295,7 @@ export default class TabMap extends Vue {
           });
 
           // Aktuelle Position anzeigen
-          if(navigator.geolocation) {
+          if (navigator.geolocation) {
             // Marker vorbereiten
             const locationMarker = new google.maps.Marker({
               map: map,
@@ -303,16 +306,17 @@ export default class TabMap extends Vue {
 
             this.geolocationWatchId = navigator.geolocation.watchPosition(
                 position => locationMarker.setPosition({
-                  lat: position.coords.latitude, lng: position.coords.longitude}),
+                  lat: position.coords.latitude, lng: position.coords.longitude
+                }),
                 null,
                 {
-                  maximumAge: 60*60*1000,
+                  maximumAge: 60 * 60 * 1000,
                   enableHighAccuracy: true
                 }
             );
           }
         })
-    .catch(e => console.log(`Maps-Loader: ${e.message}`));
+        .catch(e => console.log(`Maps-Loader: ${e.message}`));
   }
 
   /**
