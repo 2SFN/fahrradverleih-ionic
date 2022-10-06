@@ -10,7 +10,8 @@
     </ion-content>
 
     <!-- Modal: Kategorie-Auswahl (nach Auswahl einer Station) -->
-    <ion-modal id="modal-kategorie" animated="true" :is-open="modalKategorieOpen">
+    <ion-modal id="modal-kategorie" animated="true" :is-open="modalKategorieOpen"
+               @didDismiss="setModalKategorieOpen(false)">
       <ion-content>
         <ion-toolbar color="primary">
           <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
@@ -45,7 +46,8 @@
     </ion-modal>
 
     <!-- Modal: Fahrrad-Auswahl (nach Auswahl eines Rad-Typs) -->
-    <ion-modal id="modal-rad" animated="true" :is-open="modalRadListeOpen">
+    <ion-modal id="modal-rad" animated="true" :is-open="modalRadListeOpen"
+               @didDismiss="setModalRadListeOpen(false)">
       <ion-content>
         <ion-toolbar color="primary">
           <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
@@ -56,9 +58,9 @@
         </ion-toolbar>
 
         <ion-list>
-          <rad-item v-for="rad in raeder" :key="rad" :rad="rad">
+          <rad-item v-for="rad in getRaederGefiltert()" :key="rad" :rad="rad">
             <ion-button expand="block" class="block-button bb-primary" fill="outline">
-              Für Später Reservieren
+              Reservieren
             </ion-button>
             <ion-button expand="block" class="block-button bb-primary" fill="outline"
                         @click="setModalAusleiheOpen(true, rad)">
@@ -77,7 +79,8 @@
     </ion-modal>
 
     <!-- Modal: Ausleihe vorbereiten (nach Auswahl eines Fahrrads) -->
-    <ion-modal id="modal-ausleihe" animated="true" :is-open="modalAusleiheOpen">
+    <ion-modal id="modal-ausleihe" animated="true" :is-open="modalAusleiheOpen"
+               @didDismiss="setModalAusleiheOpen(false)">
       <ion-content>
         <ion-toolbar color="primary">
           <ion-icon src="assets/icon/ic_map_marker.svg" slot="start" class="marker-icon"></ion-icon>
@@ -151,6 +154,8 @@ import RadItem from "@/components/RadItem.vue";
 import EndOfListHint from "@/components/EndOfListHint.vue";
 import "@/theme/buttons.css";
 import MapSymbols from "@/util/map-symbols";
+import {AndroidPermissions} from "@awesome-cordova-plugins/android-permissions";
+import {Capacitor} from "@capacitor/core";
 
 // noinspection JSMethodCanBeStatic
 @Options({
@@ -162,6 +167,10 @@ import MapSymbols from "@/util/map-symbols";
   }
 })
 export default class TabMap extends Vue {
+  private static readonly LOCATION_PERMISSIONS = [
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION"
+  ];
   private static readonly DAUER_MIN = 1;
   private static readonly DAUER_MAX = 48;
 
@@ -171,6 +180,7 @@ export default class TabMap extends Vue {
 
   private stationen: Station[] = []
   private raeder: Fahrrad[] = []
+  private filter: string | null = null;
   private anzahlProTyp = new Map<string, number>();
   private auswahlStation: Station | null = null;
   private auswahlRad: Fahrrad | null = null;
@@ -188,12 +198,17 @@ export default class TabMap extends Vue {
 
   public async mounted(): Promise<void> {
     await this.stationenService.init();
+    if (Capacitor.getPlatform() === "android") {
+      const hasPerm = await AndroidPermissions.hasPermission(TabMap.LOCATION_PERMISSIONS[0]);
+      console.log(`TabMap: Has location permissions -> ${hasPerm.hasPermission}`);
+      if (!hasPerm.hasPermission) await AndroidPermissions.requestPermissions(TabMap.LOCATION_PERMISSIONS);
+    }
     this.ladeStationen();
   }
 
   public async unmounted(): Promise<void> {
     // Falls vorhanden, Updates der Nutzerposition abbestellen
-    if(this.geolocationWatchId) {
+    if (this.geolocationWatchId) {
       navigator.geolocation.clearWatch(this.geolocationWatchId);
       this.geolocationWatchId = null;
     }
@@ -280,7 +295,7 @@ export default class TabMap extends Vue {
           });
 
           // Aktuelle Position anzeigen
-          if(navigator.geolocation) {
+          if (navigator.geolocation) {
             // Marker vorbereiten
             const locationMarker = new google.maps.Marker({
               map: map,
@@ -291,15 +306,17 @@ export default class TabMap extends Vue {
 
             this.geolocationWatchId = navigator.geolocation.watchPosition(
                 position => locationMarker.setPosition({
-                  lat: position.coords.latitude, lng: position.coords.longitude}),
+                  lat: position.coords.latitude, lng: position.coords.longitude
+                }),
                 null,
                 {
-                  maximumAge: 60*60*1000,
+                  maximumAge: 60 * 60 * 1000,
                   enableHighAccuracy: true
                 }
             );
           }
-        });
+        })
+        .catch(e => console.log(`Maps-Loader: ${e.message}`));
   }
 
   /**
@@ -313,10 +330,8 @@ export default class TabMap extends Vue {
   private async setModalRadListeOpen(open: boolean, station: Station | null = null,
                                      filter: string | null = null) {
     this.modalRadListeOpen = open;
+    this.filter = filter;
     this.auswahlStation = station;
-
-    if (this.raeder.length > 0 && filter !== null)
-      this.raeder = this.raeder.filter(r => r.typ.bezeichnung === filter);
   }
 
   /**
@@ -407,6 +422,10 @@ export default class TabMap extends Vue {
             "Laden der Stationen fehlgeschlagen",
             `Fehler: ${e.message}`
         ));
+  }
+
+  private getRaederGefiltert(): Fahrrad[] {
+    return this.raeder.filter(r => r.typ.bezeichnung === this.filter || this.filter === null);
   }
 
   /**

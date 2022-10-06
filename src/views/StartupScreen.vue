@@ -148,7 +148,7 @@ export default class StartupScreen extends Vue {
 
     // Versuche Authentifizierung am Backend/Service mit gespeichertem Token
     this.benutzerService.auth()
-        .then(() => this.$router.push("/tabs"))
+        .then(() => this.$router.replace("/tabs"))
         .catch(e => {
           // Lösche ungültiges Token
           this.prefs.remove(Prefs.KEY_TOKEN);

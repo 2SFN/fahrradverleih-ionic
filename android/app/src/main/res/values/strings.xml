@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fahrradverleih (Ionic)</string>
+    <string name="title_activity_main">Fahrradverleih (Ionic)</string>
+    <string name="package_name">de.fhswf.fahrradverleih.ionic</string>
+    <string name="custom_url_scheme">de.fhswf.fahrradverleih.ionic</string>
+</resources>

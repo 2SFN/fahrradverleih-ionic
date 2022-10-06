@@ -4,7 +4,17 @@ const config: CapacitorConfig = {
   appId: 'de.fhswf.fahrradverleih.ionic',
   appName: 'Fahrradverleih (Ionic)',
   webDir: 'dist',
-  bundledWebRuntime: false
+  bundledWebRuntime: false,
+  server: {
+    allowNavigation: [
+        "*"
+    ],
+    cleartext: true
+  },
+  android: {
+    allowMixedContent: true,
+    webContentsDebuggingEnabled: true,
+  }
 };
 
 export default config;

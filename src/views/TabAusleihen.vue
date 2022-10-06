@@ -30,7 +30,8 @@
     </ion-content>
 
     <!-- Modal: Stations-Auswahl (bei Rückgabe) -->
-    <ion-modal id="select-station" animated="true" :is-open="modalStationOpen">
+    <ion-modal id="select-station" animated="true" :is-open="modalStationOpen"
+               @didDismiss="setModalStationOpen(false)">
       <ion-content>
         <ion-toolbar class="dialog-toolbar">
           <h2>Rückgabe-Station auswählen</h2>

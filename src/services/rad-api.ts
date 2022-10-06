@@ -12,14 +12,12 @@ import dateResponseInterceptor from "@/util/date-response-interceptor";
  */
 @singleton()
 export default class RadApi {
-    private static readonly BASE_URL = "http://localhost:3000/api";
-
     private axios: AxiosInstance;
     private prefs: Prefs = container.resolve(Prefs);
 
     constructor() {
         this.axios = axios.create({
-            baseURL: RadApi.BASE_URL
+            baseURL: process.env.VUE_APP_RAD_API_URL
         });
 
         // Response-Interceptor, um Date-Strings zu Date-Objekten umzuwandeln
